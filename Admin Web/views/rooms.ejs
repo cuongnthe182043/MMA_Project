@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Phòng</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 30px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    th {
+      background: #4a90e2;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f6fc;
+    }
+
+    tr:hover {
+      background: #e9f2ff;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #357ab8;
+    }
+
+    .status-available {
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .status-maintenance {
+      color: #e67e22;
+      font-weight: 600;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .top-bar a {
+      text-decoration: none;
+      background: #4a90e2;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .top-bar a:hover {
+      background: #357ab8;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>Danh sách phòng</h1>
+    <a href="/bookings">⬅ Quay lại Dashboard</a>
+  </div>
+
+  <table>
+    <tr>
+      <th>Tên phòng</th>
+      <th>Sức chứa</th>
+      <th>Trạng thái</th>
+      <th>Hành động</th>
+    </tr>
+    <% rooms.forEach(r => { %>
+      <tr>
+        <td><%= r.name %></td>
+        <td><%= r.capacity %></td>
+        <td class="status-<%= r.status %>"><%= r.status.toUpperCase() %></td>
+        <td>
+          <form method="post" action="/rooms/<%= r.id %>/update">
+            <select name="status">
+              <option value="available" <%= r.status === "available" ? "selected" : "" %>>Available</option>
+              <option value="maintenance" <%= r.status === "maintenance" ? "selected" : "" %>>Maintenance</option>
+            </select>
+            <button type="submit">Cập nhật</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </table>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Booking</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 30px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .filter-bar {
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-bar form {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-bar label {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      background: white;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    th {
+      background: #4a90e2;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f6fc;
+    }
+
+    tr:hover {
+      background: #e9f2ff;
+    }
+
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #357ab8;
+    }
+
+    button[type="submit"]:nth-of-type(2) {
+      background: #e74c3c;
+    }
+
+    button[type="submit"]:nth-of-type(2):hover {
+      background: #c0392b;
+    }
+
+    em {
+      color: #888;
+    }
+
+    /* Status color tags */
+    .status {
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: capitalize;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-approved {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .top-bar a {
+      text-decoration: none;
+      background: #4a90e2;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .top-bar a:hover {
+      background: #357ab8;
+    }
+  </style>
+</head>
+<body>
+  <div class="filter-bar">
+    <h1>Danh sách yêu cầu mượn phòng</h1>
+    <a href="/rooms">Danh sách phòng</a>
+  </div>
+
+  <div class="filter-bar">
+    <form method="GET" action="/bookings">
+      <label>Lọc theo trạng thái:</label>
+      <select name="status" onchange="this.form.submit()">
+        <option value="all" <%= currentStatus === "all" ? "selected" : "" %>>Tất cả</option>
+        <option value="pending" <%= currentStatus === "pending" ? "selected" : "" %>>Đang chờ duyệt</option>
+        <option value="approved" <%= currentStatus === "approved" ? "selected" : "" %>>Đã duyệt</option>
+        <option value="rejected" <%= currentStatus === "rejected" ? "selected" : "" %>>Bị từ chối</option>
+      </select>
+    </form>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Người dùng</th>
+        <th>Phòng</th>
+        <th>Thời gian vào</th>
+        <th>Thời gian ra</th>
+        <th>Trạng thái</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (bookings.length === 0) { %>
+        <tr><td colspan="5" style="text-align:center; color:#888;">Không có yêu cầu nào.</td></tr>
+      <% } %>
+      <% bookings.forEach(b => { %>
+        <tr>
+          <td><%= b.userId %></td>
+          <td><%= b.roomId %></td>
+          <td><%= b.startTime.toDate ? b.startTime.toDate().toLocaleString() : b.startTime %></td>
+          <td><%= b.endTime.toDate ? b.endTime.toDate().toLocaleString() : b.endTime %></td>
+          <td>
+            <span class="status status-<%= b.status %>"><%= b.status %></span>
+          </td>
+          <td>
+            <% if (b.status === "pending") { %>
+              <form method="post" action="/bookings/<%= b.id %>/approve" style="display:inline;">
+                <button type="submit">Duyệt</button>
+              </form>
+              <form method="post" action="/bookings/<%= b.id %>/reject" style="display:inline;">
+                <button type="submit">Từ chối</button>
+              </form>
+            <% } else { %>
+              <em>-</em>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</body>
+</html>
