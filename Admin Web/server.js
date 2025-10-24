@@ -59,4 +59,27 @@ app.post("/rooms/:id/update", async (req, res) => {
     res.redirect("/rooms");
 });
 
+app.post("/rooms/add", async (req, res) => {
+    try {
+        const { auditorium, floor, name, location, equipments } = req.body;
+
+        const newRoom = {
+            auditorium,
+            floor: parseInt(floor),
+            name,
+            location,
+            equipments: Array.isArray(equipments) ? equipments : [equipments],
+            capacity: 50, // default, or you can make this a form field
+            status: "available",
+            createdAt: new Date(),
+        };
+
+        await db.collection("rooms").add(newRoom);
+        res.redirect("/rooms");
+    } catch (err) {
+        console.error("❌ Error adding room:", err);
+        res.status(500).send("Error adding room");
+    }
+});
+
 app.listen(3000, () => console.log("✅ Admin Web chạy tại http://localhost:3000"));
