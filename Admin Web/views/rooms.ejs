@@ -183,6 +183,18 @@
     .equipments label {
       font-weight: normal;
     }
+
+    .edit-btn {
+      background: orange;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      margin-left: 50px;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +225,18 @@
               <option value="maintenance" <%= r.status === "maintenance" ? "selected" : "" %>>Maintenance</option>
             </select>
             <button type="submit">Cập nhật</button>
+            <button 
+              type="button"
+              class="edit-btn"
+              data-id="<%= r.id %>"
+              data-name="<%= r.name %>"
+              data-location="<%= r.location %>"
+              data-auditorium="<%= r.auditorium %>"
+              data-floor="<%= r.floor %>"
+              data-equipments="<%= r.equipments ? r.equipments.join(',') : '' %>"
+            >
+              ✏ Edit
+            </button>
           </form>
         </td>
       </tr>
@@ -260,6 +284,47 @@
     </div>
   </div>
 
+  <!-- ===== Edit Room Modal ===== -->
+  <div id="editRoomModal" class="modal">
+  <div class="modal-content">
+    <h3>Chỉnh sửa phòng</h3>
+    <form id="editRoomForm" method="POST">
+      <div class="form-group">
+        <label>Auditorium</label>
+        <select name="auditorium" required>
+          <option>Alpha</option>
+          <option>Beta</option>
+          <option>Delta</option>
+          <option>F</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tầng</label>
+        <select name="floor" required>
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tên phòng</label>
+        <input type="text" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Vị trí</label>
+        <input type="text" name="location" required />
+      </div>
+      <div class="form-group">
+        <label>Thiết bị</label>
+        <label><input type="checkbox" name="equipments" value="Whiteboard"> Whiteboard</label>
+        <label><input type="checkbox" name="equipments" value="Projector"> Projector</label>
+      </div>
+      <div class="actions">
+        <button type="button" onclick="closeEditModal()">Hủy</button>
+        <button type="submit">Lưu thay đổi</button>
+      </div>
+    </form>
+  </div>
+  </div>  
+
   <script>
     const addRoomBtn = document.getElementById('addRoomBtn');
     const modal = document.getElementById('addRoomModal');
@@ -282,5 +347,46 @@
       }
     };
   </script>
+
+  <script>
+  const editModal = document.getElementById('editRoomModal');
+  const editForm = document.getElementById('editRoomForm');
+
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const room = {
+        id: btn.dataset.id,
+        name: btn.dataset.name,
+        location: btn.dataset.location,
+        auditorium: btn.dataset.auditorium,
+        floor: btn.dataset.floor,
+        equipments: btn.dataset.equipments ? btn.dataset.equipments.split(',') : []
+      };
+
+      // Populate form
+      editForm.action = '/rooms/' + room.id + '/edit';
+      editForm.querySelector('[name="auditorium"]').value = room.auditorium;
+      editForm.querySelector('[name="floor"]').value = room.floor;
+      editForm.querySelector('[name="name"]').value = room.name;
+      editForm.querySelector('[name="location"]').value = room.location;
+      editForm.querySelectorAll('[name="equipments"]').forEach(cb => {
+        cb.checked = room.equipments.includes(cb.value);
+      });
+
+      // Show modal
+      editModal.style.display = 'flex';
+    });
+  });
+
+  function closeEditModal() {
+    editForm.reset();
+    editModal.style.display = 'none';
+  }
+
+  window.onclick = (e) => {
+    if (e.target === editModal) closeEditModal();
+  };
+</script>
+
 </body>
 </html>

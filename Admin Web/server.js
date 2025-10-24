@@ -82,4 +82,25 @@ app.post("/rooms/add", async (req, res) => {
     }
 });
 
+app.post('/rooms/:id/edit', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { auditorium, floor, name, location, equipments } = req.body;
+
+        await db.collection('rooms').doc(id).update({
+            auditorium,
+            floor,
+            name,
+            location,
+            equipments: Array.isArray(equipments) ? equipments : [equipments].filter(Boolean),
+            updatedAt: new Date()
+        });
+
+        res.redirect('/rooms');
+    } catch (error) {
+        console.error('Error updating room:', error);
+        res.status(500).send('Lỗi khi chỉnh sửa phòng');
+    }
+});
+
 app.listen(3000, () => console.log("✅ Admin Web chạy tại http://localhost:3000"));
