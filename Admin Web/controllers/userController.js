@@ -1,4 +1,4 @@
-import { db, admin } from "../config/admin.js";
+import { db, admin } from "../admin.js";
 import { User } from "../models/User.js";
 
 /**
