@@ -1,9 +1,19 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { db } from "./admin.js";
 import session from "express-session";
 import bcrypt from "bcrypt";
+import { db } from "./admin.js";
 import { ADMIN_EMAIL, ADMIN_PASSWORD_HASH } from "./admin_account.js";
+
+// 🆕 Import controllers
+import { registerUser, updateUser } from "./controllers/userController.js";
+import {
+    getBookingsByUserId,
+    addBooking,
+    editBooking,
+    cancelBooking,
+} from "./controllers/bookingController.js";
+import { getRoomById } from "./controllers/roomController.js";
 
 const app = express();
 app.set("view engine", "ejs");
@@ -12,6 +22,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// 🔐 Session setup
+app.use(
+    session({
+        secret: "super-secret-key", // change this in production
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: false }, // true only if using HTTPS
+    })
+);
+
+// ✅ Middleware for admin routes
 function requireAdmin(req, res, next) {
     if (!req.session.isAdmin) {
         return res.redirect("/login");
@@ -19,22 +40,15 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// 🔐 Session setup
-app.use(
-    session({
-        secret: "super-secret-key", // change this to env var in production
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: false }, // true only if using HTTPS
-    })
-);
+/* -------------------------------------------------------------------------- */
+/*                                🔹 ADMIN ROUTES                             */
+/* -------------------------------------------------------------------------- */
 
 // 📌 Trang danh sách booking
 app.get("/bookings", requireAdmin, async (req, res) => {
     const { status } = req.query;
     let query = db.collection("bookings");
 
-    // Apply filter if status query exists
     if (status && ["pending", "approved", "rejected"].includes(status)) {
         query = query.where("status", "==", status);
     }
@@ -81,6 +95,7 @@ app.post("/rooms/:id/update", async (req, res) => {
     res.redirect("/rooms");
 });
 
+// 📌 Thêm phòng
 app.post("/rooms/add", async (req, res) => {
     try {
         const { auditorium, floor, name, location, equipments } = req.body;
@@ -91,7 +106,7 @@ app.post("/rooms/add", async (req, res) => {
             name,
             location,
             equipments: Array.isArray(equipments) ? equipments : [equipments],
-            capacity: 50, // default, or you can make this a form field
+            capacity: 50,
             status: "available",
             createdAt: new Date(),
         };
@@ -104,24 +119,27 @@ app.post("/rooms/add", async (req, res) => {
     }
 });
 
-app.post('/rooms/:id/edit', async (req, res) => {
+// 📌 Chỉnh sửa phòng
+app.post("/rooms/:id/edit", async (req, res) => {
     try {
         const { id } = req.params;
         const { auditorium, floor, name, location, equipments } = req.body;
 
-        await db.collection('rooms').doc(id).update({
+        await db.collection("rooms").doc(id).update({
             auditorium,
             floor,
             name,
             location,
-            equipments: Array.isArray(equipments) ? equipments : [equipments].filter(Boolean),
-            updatedAt: new Date()
+            equipments: Array.isArray(equipments)
+                ? equipments
+                : [equipments].filter(Boolean),
+            updatedAt: new Date(),
         });
 
-        res.redirect('/rooms');
+        res.redirect("/rooms");
     } catch (error) {
-        console.error('Error updating room:', error);
-        res.status(500).send('Lỗi khi chỉnh sửa phòng');
+        console.error("Error updating room:", error);
+        res.status(500).send("Lỗi khi chỉnh sửa phòng");
     }
 });
 
@@ -151,4 +169,25 @@ app.get("/logout", (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log("✅ Admin Web chạy tại http://localhost:3000"));
+/* -------------------------------------------------------------------------- */
+/*                             🔹 API ROUTES (JSON)                           */
+/* -------------------------------------------------------------------------- */
+
+// 🧍 USER ROUTES
+app.post("/api/users/register", registerUser);
+app.put("/api/users/:id", updateUser);
+
+// 🧾 BOOKING ROUTES
+app.get("/api/bookings/user/:userId", getBookingsByUserId);
+app.post("/api/bookings", addBooking);
+app.put("/api/bookings/:id", editBooking);
+app.delete("/api/bookings/:id", cancelBooking);
+
+// 🏢 ROOM ROUTE
+app.get("/api/rooms/:id", getRoomById);
+
+/* -------------------------------------------------------------------------- */
+
+app.listen(3000, () =>
+    console.log("✅ Admin Web chạy tại http://localhost:3000")
+);
