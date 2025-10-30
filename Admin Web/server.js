@@ -11,7 +11,7 @@ import {
     getBookingsByUserId,
     addBooking,
     editBooking,
-    cancelBooking,
+    deleteBooking,
 } from "./controllers/bookingController.js";
 import { getRoomById } from "./controllers/roomController.js";
 
@@ -181,7 +181,7 @@ app.put("/api/users/:id", updateUser);
 app.get("/api/bookings/user/:userId", getBookingsByUserId);
 app.post("/api/bookings", addBooking);
 app.put("/api/bookings/:id", editBooking);
-app.delete("/api/bookings/:id", cancelBooking);
+app.delete("/api/bookings/:id", deleteBooking);
 
 // 🏢 ROOM ROUTE
 app.get("/api/rooms/:id", getRoomById);
