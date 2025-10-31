@@ -12,6 +12,7 @@ import {
     addBooking,
     editBooking,
     deleteBooking,
+    getBookingsByRoomId
 } from "./controllers/bookingController.js";
 import { getRoomById, getRoomsByLocation } from "./controllers/roomController.js";
 
@@ -36,6 +37,13 @@ app.use(
 function requireAdmin(req, res, next) {
     if (!req.session.isAdmin) {
         return res.redirect("/login");
+    }
+    next();
+}
+
+function requireUser(req, res, next) {
+    if (req.user.role !== "admin" && req.user.uid !== booking.userId) {
+        return res.status(403).json({ error: "Unauthorized access" });
     }
     next();
 }
@@ -215,6 +223,16 @@ app.get("/api/bookings/user/:userId", async (req, res) => {
     }
 });
 
+app.get("/api/bookings/room/:roomId", async (req, res) => {
+    try {
+        const result = await getBookingsByRoomId(req.params.roomId);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Get bookings error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post("/api/bookings", async (req, res) => {
     try {
         const result = await addBooking(req.body);
@@ -225,7 +243,7 @@ app.post("/api/bookings", async (req, res) => {
     }
 });
 
-app.put("/api/bookings/:id", async (req, res) => {
+app.put("/api/bookings/:id", requireUser, async (req, res) => {
     try {
         const result = await editBooking(req.params.id, req.body);
         res.status(200).json(result);
@@ -235,7 +253,7 @@ app.put("/api/bookings/:id", async (req, res) => {
     }
 });
 
-app.delete("/api/bookings/:id", async (req, res) => {
+app.delete("/api/bookings/:id", registerUser, async (req, res) => {
     try {
         const result = await deleteBooking(req.params.id);
         res.status(200).json(result);

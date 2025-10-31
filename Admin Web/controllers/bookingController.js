@@ -18,6 +18,22 @@ export async function getBookingsByUserId(userId) {
     }
 }
 
+export async function getBookingsByRoomId(roomId) {
+    try {
+        const snapshot = await db
+            .collection("bookings")
+            .where("roomId", "==", roomId)
+            .get();
+
+        if (snapshot.empty) return [];
+
+        return snapshot.docs.map((doc) => Booking.fromFirestore(doc));
+    } catch (error) {
+        console.error("❌ Error fetching bookings:", error);
+        throw new Error("Failed to fetch bookings by userId");
+    }
+}
+
 // 🔹 2. Edit booking by document ID (only if status ≠ 'pending')
 export async function editBooking(bookingId, updateData) {
     try {
