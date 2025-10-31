@@ -21,3 +21,35 @@ export const getRoomById = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const getRoomsByLocation = async (req, res) => {
+    try {
+        const { auditorium, floor } = req.query;
+
+        if (!auditorium || !floor) {
+            return res.status(400).json({ error: "Missing auditorium or floor" });
+        }
+
+        // 🔹 Query Firestore
+        const snapshot = await db
+            .collection("rooms")
+            .where("auditorium", "==", auditorium)
+            .where("floor", "==", Number(floor))
+            .get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({ message: "No rooms found" });
+        }
+
+        // 🔹 Map results
+        const rooms = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        res.status(200).json({ count: rooms.length, rooms });
+    } catch (error) {
+        console.error("Error fetching rooms:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

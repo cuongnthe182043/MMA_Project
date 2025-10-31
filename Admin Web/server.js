@@ -6,14 +6,14 @@ import { db } from "./admin.js";
 import { ADMIN_EMAIL, ADMIN_PASSWORD_HASH } from "./admin_account.js";
 
 // 🆕 Import controllers
-import { registerUser, updateUser } from "./controllers/userController.js";
+import { registerUser, updateUser, loginUser } from "./controllers/userController.js";
 import {
     getBookingsByUserId,
     addBooking,
     editBooking,
     deleteBooking,
 } from "./controllers/bookingController.js";
-import { getRoomById } from "./controllers/roomController.js";
+import { getRoomById, getRoomsByLocation } from "./controllers/roomController.js";
 
 const app = express();
 app.set("view engine", "ejs");
@@ -174,17 +174,81 @@ app.get("/logout", (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 // 🧍 USER ROUTES
-app.post("/api/users/register", registerUser);
-app.put("/api/users/:id", updateUser);
+app.post("/api/users/login", async (req, res) => {
+    try {
+        const result = await loginUser(req.body);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Login error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post("/api/users/register", async (req, res) => {
+    try {
+        const result = await registerUser(req.body);
+        res.status(201).json(result);
+    } catch (error) {
+        console.error("❌ Register error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put("/api/users/:id", async (req, res) => {
+    try {
+        const result = await updateUser(req.params.id, req.body);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Update user error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // 🧾 BOOKING ROUTES
-app.get("/api/bookings/user/:userId", getBookingsByUserId);
-app.post("/api/bookings", addBooking);
-app.put("/api/bookings/:id", editBooking);
-app.delete("/api/bookings/:id", deleteBooking);
+app.get("/api/bookings/user/:userId", async (req, res) => {
+    try {
+        const result = await getBookingsByUserId(req.params.userId);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Get bookings error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post("/api/bookings", async (req, res) => {
+    try {
+        const result = await addBooking(req.body);
+        res.status(201).json(result);
+    } catch (error) {
+        console.error("❌ Add booking error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put("/api/bookings/:id", async (req, res) => {
+    try {
+        const result = await editBooking(req.params.id, req.body);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Edit booking error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete("/api/bookings/:id", async (req, res) => {
+    try {
+        const result = await deleteBooking(req.params.id);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Delete booking error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // 🏢 ROOM ROUTE
-app.get("/api/rooms/:id", getRoomById);
+app.get("/api/room/:id", getRoomById);
+
+app.get("/api/rooms/filter", getRoomsByLocation);
 
 /* -------------------------------------------------------------------------- */
 
