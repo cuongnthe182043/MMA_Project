@@ -182,35 +182,11 @@ app.get("/logout", (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 // 🧍 USER ROUTES
-app.post("/api/users/login", async (req, res) => {
-    try {
-        const result = await loginUser(req.body);
-        res.status(200).json(result);
-    } catch (error) {
-        console.error("❌ Login error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
+app.post("/api/users/login", loginUser);
 
-app.post("/api/users/register", async (req, res) => {
-    try {
-        const result = await registerUser(req.body);
-        res.status(201).json(result);
-    } catch (error) {
-        console.error("❌ Register error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
+app.post("/api/users/register", registerUser);
 
-app.put("/api/users/:id", async (req, res) => {
-    try {
-        const result = await updateUser(req.params.id, req.body);
-        res.status(200).json(result);
-    } catch (error) {
-        console.error("❌ Update user error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
+app.put("/api/users/:id", updateUser);
 
 // 🧾 BOOKING ROUTES
 app.get("/api/bookings/user/:userId", async (req, res) => {

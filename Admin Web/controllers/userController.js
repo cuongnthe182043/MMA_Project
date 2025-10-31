@@ -1,12 +1,26 @@
 import { db, admin } from "../admin.js";
 import { User } from "../models/User.js";
+import bcrypt from "bcryptjs";
 
 /**
  * Register a new user
  */
 export const registerUser = async (req, res) => {
     try {
-        const { fullName, email, phone, faculty, role } = req.body;
+        const { fullName, email, phone, faculty, role, password } = req.body;
+
+        // 🔹 Check if email provided
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+
+        // 🔹 Validate email domain
+        const emailRegex = /^[\w.-]+@fpt\.edu\.vn$/i;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                error: "Only @fpt.edu.vn email addresses are allowed to register",
+            });
+        }
 
         // 🔹 Check if email already exists
         const existingSnapshot = await db
@@ -18,13 +32,17 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ error: "Email already registered" });
         }
 
-        // 🔹 Create a new User instance
+        // 🔹 Hash password
+        const hashedPassword = bcrypt.hashSync(password || email, 10);
+
+        // 🔹 Create new user
         const newUser = new User({
             fullName,
             email,
             phone,
             faculty,
             role: role || "student",
+            password: hashedPassword,
             activeBookings: 0,
             createdAt: new Date(),
         });
@@ -34,7 +52,7 @@ export const registerUser = async (req, res) => {
 
         res.status(201).json({
             message: "User registered successfully",
-            user: { id: docRef.id, ...newUser },
+            user: { id: docRef.id, email, fullName, role: newUser.role },
         });
     } catch (error) {
         console.error("Error registering user:", error);
@@ -81,7 +99,6 @@ export const loginUser = async (req, res) => {
             return res.status(400).json({ error: "Missing email or password" });
         }
 
-        // 🔹 Find user by email
         const snapshot = await db.collection("users").where("email", "==", email).get();
         if (snapshot.empty) {
             return res.status(401).json({ error: "Invalid email or password" });
@@ -90,16 +107,11 @@ export const loginUser = async (req, res) => {
         const userDoc = snapshot.docs[0];
         const user = userDoc.data();
 
-        // 🔹 Compare password
-        // Assuming you store bcrypt-hashed passwords
-        const bcrypt = await import("bcryptjs");
         const isMatch = await bcrypt.compare(password, user.password);
-
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        // 🔹 Generate session or token
         if (req.session) {
             req.session.userId = userDoc.id;
             req.session.role = user.role;
@@ -119,3 +131,4 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+

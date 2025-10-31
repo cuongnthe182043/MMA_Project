@@ -42,12 +42,6 @@ export async function editBooking(bookingId, updateData) {
 
         if (!doc.exists) throw new Error("Booking not found");
 
-        const booking = Booking.fromFirestore(doc);
-
-        if (booking.status === "pending") {
-            throw new Error("Cannot edit booking while status is 'pending'");
-        }
-
         await bookingRef.update({
             ...updateData,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -89,15 +83,52 @@ export async function deleteBooking(bookingId) {
 // 🔹 4. Add a new booking
 export async function addBooking(newBookingData) {
     try {
+        const { roomId, startTime, endTime, userId } = newBookingData;
+
+        if (!roomId || !startTime || !endTime || !userId) {
+            throw new Error("Missing required booking fields.");
+        }
+
+        // Convert to Firestore Timestamps
+        const start = admin.firestore.Timestamp.fromDate(new Date(startTime));
+        const end = admin.firestore.Timestamp.fromDate(new Date(endTime));
+
+        if (end.toMillis() <= start.toMillis()) {
+            throw new Error("End time must be after start time.");
+        }
+
+        // 🔍 Check if there’s already an approved booking overlapping this time range
+        const existing = await db
+            .collection("bookings")
+            .where("roomId", "==", roomId)
+            .where("status", "==", "approved")
+            .get();
+
+        for (const doc of existing.docs) {
+            const data = doc.data();
+            const existingStart = data.startTime.toDate();
+            const existingEnd = data.endTime.toDate();
+
+            // Check overlap: (start < existingEnd) && (end > existingStart)
+            if (start.toDate() < existingEnd && end.toDate() > existingStart) {
+                throw new Error("Room is already booked during this period.");
+            }
+        }
+
+        // ✅ No conflicts, proceed with creating a pending booking
         const booking = new Booking({
             ...newBookingData,
+            startTime: start,
+            endTime: end,
+            status: "pending",
             createdAt: admin.firestore.Timestamp.now(),
         });
 
         const ref = await db.collection("bookings").add(booking.toFirestore(admin));
-        return { success: true, id: ref.id, message: "Booking added successfully" };
+
+        return { success: true, id: ref.id, message: "Booking added successfully and is pending approval." };
     } catch (error) {
         console.error("❌ Error adding booking:", error);
-        throw new Error("Failed to add booking");
+        throw new Error(error.message || "Failed to add booking");
     }
 }

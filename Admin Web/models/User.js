@@ -3,6 +3,7 @@ export class User {
     id = null,               // Firestore document ID
     fullName = "",
     email = "",
+    password = "",
     phone = "",
     faculty = "",
     role = "student",
@@ -12,6 +13,7 @@ export class User {
     this.id = id;
     this.fullName = fullName;
     this.email = email;
+    this.password = password;
     this.phone = phone;
     this.faculty = faculty;
     this.role = role;
@@ -26,6 +28,7 @@ export class User {
       id: doc.id,
       fullName: data.fullName,
       email: data.email,
+      password: data.password,
       phone: data.phone,
       faculty: data.faculty,
       role: data.role,
@@ -39,6 +42,7 @@ export class User {
     return {
       fullName: this.fullName,
       email: this.email,
+      password: this.password,
       phone: this.phone,
       faculty: this.faculty,
       role: this.role,
