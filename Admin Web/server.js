@@ -4,6 +4,7 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import { db } from "./admin.js";
 import { ADMIN_EMAIL, ADMIN_PASSWORD_HASH } from "./admin_account.js";
+import cors from "cors";
 
 // 🆕 Import controllers
 import { registerUser, updateUser, loginUser } from "./controllers/userController.js";
@@ -22,6 +23,11 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cors({
+    origin: ["http://localhost:8081", "http://localhost:19006"], // your local web URLs
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 
 // 🔐 Session setup
 app.use(
