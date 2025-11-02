@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { login } from "../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen({ navigation, setIsLoggedIn }) {
     const [email, setEmail] = useState("");
@@ -11,8 +12,9 @@ export default function LoginScreen({ navigation, setIsLoggedIn }) {
 
         try {
             const res = await login(email, password);
-            if (res.success) {
+            if (res?.user) {
                 setIsLoggedIn(true);
+                await AsyncStorage.setItem("user", JSON.stringify(res.user));
             } else {
                 Alert.alert("Login Failed", res.message || "Invalid credentials");
             }

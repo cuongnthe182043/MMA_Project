@@ -1,7 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DrawerContent({ navigation }) {
+    const handleLogout = async () => {
+        await AsyncStorage.removeItem("user");
+        navigation.navigate("Login");
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.profile}>
@@ -19,7 +25,7 @@ export default function DrawerContent({ navigation }) {
                 <Text style={styles.text}>History</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.replace("Login")} style={styles.item}>
+            <TouchableOpacity onPress={() => handleLogout()} style={styles.item}>
                 <Ionicons name="log-out-outline" size={22} color="#333" />
                 <Text style={styles.text}>Logout</Text>
             </TouchableOpacity>

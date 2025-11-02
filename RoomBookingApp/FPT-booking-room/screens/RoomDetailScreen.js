@@ -5,7 +5,7 @@ import { addBooking } from "../services/api";
 export default function RoomDetailScreen({ route }) {
     const { room } = route.params;
     const [visible, setVisible] = useState(false);
-    const [user, setUser] = useState("");
+    const [user, setUser] = useState(localStorage.getItem("user"));
     const [time, setTime] = useState("");
 
     const handleBooking = async () => {
