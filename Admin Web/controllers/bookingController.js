@@ -2,9 +2,6 @@ import { db, admin } from "../admin.js";
 import { Booking } from "../models/Booking.js";
 
 // 🔹 1. Get all bookings by userId
-import { db } from "../firebase";
-import { Booking } from "../models/Booking";
-
 export async function getBookingsByUserId(userId) {
     try {
         const snapshot = await db
@@ -36,7 +33,6 @@ export async function getBookingsByUserId(userId) {
         throw new Error("Failed to fetch bookings by userId");
     }
 }
-
 
 export async function getBookingsByRoomId(roomId) {
     try {
