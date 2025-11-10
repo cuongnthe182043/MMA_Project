@@ -43,10 +43,26 @@ export async function getBookingsByRoomId(roomId) {
 
         if (snapshot.empty) return [];
 
-        return snapshot.docs.map((doc) => Booking.fromFirestore(doc));
+        const bookings = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+                const booking = Booking.fromFirestore(doc);
+
+                // 🔹 Fetch user document
+                const userDoc = await db.collection("users").doc(booking.userId).get();
+                const userFullName = userDoc.exists ? userDoc.data().fullName : "Unknown User";
+
+                // 🔹 Return booking object with userFullName instead of userId
+                return {
+                    ...booking,
+                    userFullName,
+                };
+            })
+        );
+
+        return bookings;
     } catch (error) {
-        console.error("❌ Error fetching bookings:", error);
-        throw new Error("Failed to fetch bookings by userId");
+        console.error("❌ Error fetching bookings with user names:", error);
+        throw new Error("Failed to fetch bookings by roomId");
     }
 }
 
