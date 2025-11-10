@@ -175,8 +175,8 @@
       <% } %>
       <% bookings.forEach(b => { %>
         <tr>
-          <td><%= b.userId %></td>
-          <td><%= b.roomId %></td>
+          <td><%= b.userFullName %></td>
+          <td><%= b.roomName %></td>
           <td><%= b.startTime.toDate ? b.startTime.toDate().toLocaleString() : b.startTime %></td>
           <td><%= b.endTime.toDate ? b.endTime.toDate().toLocaleString() : b.endTime %></td>
           <td>

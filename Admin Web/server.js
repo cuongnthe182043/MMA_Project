@@ -60,20 +60,52 @@ function requireUser(req, res, next) {
 
 // 📌 Trang danh sách booking
 app.get("/bookings", requireAdmin, async (req, res) => {
-    const { status } = req.query;
-    let query = db.collection("bookings");
+    try {
+        const { status } = req.query;
+        let query = db.collection("bookings");
 
-    if (status && ["pending", "approved", "rejected"].includes(status)) {
-        query = query.where("status", "==", status);
+        // 🔹 Filter by status if provided
+        if (status && ["pending", "approved", "rejected"].includes(status)) {
+            query = query.where("status", "==", status);
+        }
+
+        // 🔹 Fetch bookings
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+            return res.render("bookings", { bookings: [], currentStatus: status || "all" });
+        }
+
+        // 🔹 Map bookings and fetch related user + room data
+        const bookings = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+                const bookingData = doc.data();
+                const userId = bookingData.userId;
+                const roomId = bookingData.roomId;
+
+                // Fetch user document
+                const userDoc = await db.collection("users").doc(userId).get();
+                const userFullName = userDoc.exists ? userDoc.data().fullName : "Unknown User";
+
+                // Fetch room document
+                const roomDoc = await db.collection("rooms").doc(roomId).get();
+                const roomName = roomDoc.exists ? roomDoc.data().name : "Unknown Room";
+
+                // Return enriched booking object
+                return {
+                    id: doc.id,
+                    ...bookingData,
+                    userFullName,
+                    roomName,
+                };
+            })
+        );
+
+        // 🔹 Render bookings page with extra fields
+        res.render("bookings", { bookings, currentStatus: status || "all" });
+    } catch (error) {
+        console.error("❌ Error fetching bookings:", error);
+        res.status(500).send("Internal Server Error");
     }
-
-    const snapshot = await query.get();
-    const bookings = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-    }));
-
-    res.render("bookings", { bookings, currentStatus: status || "all" });
 });
 
 // 📌 Duyệt đơn booking
