@@ -14,11 +14,13 @@ import HistoryScreen from "../screens/HistoryScreen";
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-function MainDrawer() {
+function MainDrawer({ setIsLoggedIn }) {
     return (
         <Drawer.Navigator
             screenOptions={{ headerShown: true, drawerPosition: "right" }}
-            drawerContent={(props) => <DrawerContent {...props} />}
+            drawerContent={(props) => (
+                <DrawerContent {...props} setIsLoggedIn={setIsLoggedIn} />
+            )}
         >
             <Drawer.Screen name="Booking" component={HomeScreen} />
             <Drawer.Screen name="History" component={HistoryScreen} />
@@ -30,12 +32,10 @@ export default function AppNavigator() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Load login state from AsyncStorage on app start
     useEffect(() => {
         const checkLoginStatus = async () => {
             try {
                 const userData = await AsyncStorage.getItem("user");
-                console.log("User data:", userData);
                 if (userData) setIsLoggedIn(true);
             } catch (error) {
                 console.error("Error loading login status:", error);
@@ -46,7 +46,7 @@ export default function AppNavigator() {
         checkLoginStatus();
     }, []);
 
-    if (loading) return null; // Optionally show a splash screen here
+    if (loading) return null;
 
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -54,17 +54,16 @@ export default function AppNavigator() {
                 <>
                     <Stack.Screen name="Login">
                         {(props) => (
-                            <LoginScreen
-                                {...props}
-                                setIsLoggedIn={setIsLoggedIn}
-                            />
+                            <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />
                         )}
                     </Stack.Screen>
                     <Stack.Screen name="Register" component={RegisterScreen} />
                 </>
             ) : (
                 <>
-                    <Stack.Screen name="MainDrawer" component={MainDrawer} />
+                    <Stack.Screen name="MainDrawer">
+                        {(props) => <MainDrawer {...props} setIsLoggedIn={setIsLoggedIn} />}
+                    </Stack.Screen>
                     <Stack.Screen name="RoomList" component={RoomListScreen} />
                     <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
                 </>

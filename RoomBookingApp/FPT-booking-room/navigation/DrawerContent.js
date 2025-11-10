@@ -1,18 +1,34 @@
+import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function DrawerContent({ navigation }) {
+export default function DrawerContent({ navigation, setIsLoggedIn }) {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const loadUser = async () => {
+            const data = await AsyncStorage.getItem("user");
+            if (data) setUser(JSON.parse(data));
+        };
+        loadUser();
+    }, []);
+
     const handleLogout = async () => {
         await AsyncStorage.removeItem("user");
-        navigation.navigate("Login");
+        setIsLoggedIn(false);
     };
 
     return (
         <View style={styles.container}>
             <View style={styles.profile}>
-                <Image source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }} style={styles.avatar} />
-                <Text style={styles.name}>Admin</Text>
+                <Image
+                    source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }}
+                    style={styles.avatar}
+                />
+                <Text style={styles.name}>
+                    {user ? user.fullName || user.email : "Loading..."}
+                </Text>
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate("Booking")} style={styles.item}>
@@ -25,7 +41,7 @@ export default function DrawerContent({ navigation }) {
                 <Text style={styles.text}>History</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => handleLogout()} style={styles.item}>
+            <TouchableOpacity onPress={handleLogout} style={styles.item}>
                 <Ionicons name="log-out-outline" size={22} color="#333" />
                 <Text style={styles.text}>Logout</Text>
             </TouchableOpacity>

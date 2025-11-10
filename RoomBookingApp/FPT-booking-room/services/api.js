@@ -27,3 +27,8 @@ export async function addBooking(data) {
     });
     return res.json();
 }
+
+export async function fetchBookingsByUser(userId) {
+    const res = await fetch(`${API_BASE}/bookings/user/${userId}`);
+    return res.json();
+}

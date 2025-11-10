@@ -2,6 +2,9 @@ import { db, admin } from "../admin.js";
 import { Booking } from "../models/Booking.js";
 
 // 🔹 1. Get all bookings by userId
+import { db } from "../firebase";
+import { Booking } from "../models/Booking";
+
 export async function getBookingsByUserId(userId) {
     try {
         const snapshot = await db
@@ -11,12 +14,29 @@ export async function getBookingsByUserId(userId) {
 
         if (snapshot.empty) return [];
 
-        return snapshot.docs.map((doc) => Booking.fromFirestore(doc));
+        const bookings = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+                const booking = Booking.fromFirestore(doc);
+
+                // 🔹 Fetch the room document
+                const roomDoc = await db.collection("rooms").doc(booking.roomId).get();
+                const roomName = roomDoc.exists ? roomDoc.data().name : "Unknown Room";
+
+                // 🔹 Return booking object with roomName instead of roomId
+                return {
+                    ...booking,
+                    roomName,
+                };
+            })
+        );
+
+        return bookings;
     } catch (error) {
-        console.error("❌ Error fetching bookings:", error);
+        console.error("❌ Error fetching bookings with room names:", error);
         throw new Error("Failed to fetch bookings by userId");
     }
 }
+
 
 export async function getBookingsByRoomId(roomId) {
     try {
