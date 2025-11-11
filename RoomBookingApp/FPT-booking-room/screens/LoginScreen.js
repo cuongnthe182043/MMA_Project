@@ -2,24 +2,47 @@ import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { login } from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import jwtDecode from "jwt-decode";
 
 export default function LoginScreen({ navigation, setIsLoggedIn }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
-    const handleLogin = async () => {
-        if (!email || !password) return Alert.alert("Missing Info", "Please fill in all fields");
+    async function getUserFromToken() {
+        const token = await AsyncStorage.getItem("token");
+        if (!token) return null;
 
         try {
-            const res = await login(email, password);
-            if (res?.user) {
+            const decoded = jwtDecode(token);
+            return decoded;
+        } catch (err) {
+            console.error("Failed to decode token:", err);
+            return null;
+        }
+    }
+
+    const handleLogin = async () => {
+        if (!email || !password) {
+            return Alert.alert("Missing Info", "Please fill in all fields");
+        }
+
+        try {
+            const data = await login(email, password);
+
+            if (data.token) {
+                // Save token
+                await AsyncStorage.setItem("token", data.token);
+
+                // Decode and save user info
+                const decodedUser = await getUserFromToken();
+                await AsyncStorage.setItem("user", JSON.stringify(decodedUser));
+
                 setIsLoggedIn(true);
-                await AsyncStorage.setItem("user", JSON.stringify(res.user));
             } else {
-                Alert.alert("Login Failed", res.message || "Invalid credentials");
+                Alert.alert("Login Failed", data.message || "Invalid credentials");
             }
         } catch (err) {
             Alert.alert("Error", "Failed to connect to server");
+            console.error(err);
         }
     };
 

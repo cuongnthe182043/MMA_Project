@@ -5,8 +5,11 @@ import bcrypt from "bcrypt";
 import { db } from "./admin.js";
 import { ADMIN_EMAIL, ADMIN_PASSWORD_HASH } from "./admin_account.js";
 import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
+import { verifyToken } from "./middlewares/authMiddleware.js";
 
-// 🆕 Import controllers
+// Import controllers
 import { registerUser, updateUser, loginUser } from "./controllers/userController.js";
 import {
     getBookingsByUserId,
@@ -29,7 +32,7 @@ app.use(cors({
     credentials: true
 }));
 
-// 🔐 Session setup
+// Session setup
 app.use(
     session({
         secret: "super-secret-key", // change this in production
@@ -39,7 +42,7 @@ app.use(
     })
 );
 
-// ✅ Middleware for admin routes
+// Middleware for admin routes
 function requireAdmin(req, res, next) {
     if (!req.session.isAdmin) {
         return res.redirect("/login");
@@ -47,35 +50,26 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-function requireUser(req, res, next) {
-    if (req.user.role !== "admin" && req.user.uid !== booking.userId) {
-        return res.status(403).json({ error: "Unauthorized access" });
-    }
-    next();
-}
+/*                                 ADMIN ROUTES                             */
 
-/* -------------------------------------------------------------------------- */
-/*                                🔹 ADMIN ROUTES                             */
-/* -------------------------------------------------------------------------- */
-
-// 📌 Trang danh sách booking
+// Trang danh sách booking
 app.get("/bookings", requireAdmin, async (req, res) => {
     try {
         const { status } = req.query;
         let query = db.collection("bookings");
 
-        // 🔹 Filter by status if provided
+        // Filter by status if provided
         if (status && ["pending", "approved", "rejected"].includes(status)) {
             query = query.where("status", "==", status);
         }
 
-        // 🔹 Fetch bookings
+        // Fetch bookings
         const snapshot = await query.get();
         if (snapshot.empty) {
             return res.render("bookings", { bookings: [], currentStatus: status || "all" });
         }
 
-        // 🔹 Map bookings and fetch related user + room data
+        // Map bookings and fetch related user + room data
         const bookings = await Promise.all(
             snapshot.docs.map(async (doc) => {
                 const bookingData = doc.data();
@@ -103,12 +97,12 @@ app.get("/bookings", requireAdmin, async (req, res) => {
         // 🔹 Render bookings page with extra fields
         res.render("bookings", { bookings, currentStatus: status || "all" });
     } catch (error) {
-        console.error("❌ Error fetching bookings:", error);
+        console.error(" Error fetching bookings:", error);
         res.status(500).send("Internal Server Error");
     }
 });
 
-// 📌 Duyệt đơn booking
+// Duyệt đơn booking
 app.post("/bookings/:id/approve", async (req, res) => {
     await db.collection("bookings").doc(req.params.id).update({
         status: "approved",
@@ -116,7 +110,7 @@ app.post("/bookings/:id/approve", async (req, res) => {
     res.redirect("/bookings");
 });
 
-// 📌 Từ chối booking
+// Từ chối booking
 app.post("/bookings/:id/reject", async (req, res) => {
     await db.collection("bookings").doc(req.params.id).update({
         status: "rejected",
@@ -124,7 +118,7 @@ app.post("/bookings/:id/reject", async (req, res) => {
     res.redirect("/bookings");
 });
 
-// 📌 Quản lý phòng
+// Quản lý phòng
 app.get("/rooms", requireAdmin, async (req, res) => {
     const snapshot = await db.collection("rooms").get();
     const rooms = snapshot.docs.map((doc) => ({
@@ -134,14 +128,14 @@ app.get("/rooms", requireAdmin, async (req, res) => {
     res.render("rooms", { rooms });
 });
 
-// 📌 Update trạng thái phòng
+// Update trạng thái phòng
 app.post("/rooms/:id/update", async (req, res) => {
     const { status } = req.body;
     await db.collection("rooms").doc(req.params.id).update({ status });
     res.redirect("/rooms");
 });
 
-// 📌 Thêm phòng
+// Thêm phòng
 app.post("/rooms/add", async (req, res) => {
     try {
         const { auditorium, floor, name, location, equipments } = req.body;
@@ -160,12 +154,12 @@ app.post("/rooms/add", async (req, res) => {
         await db.collection("rooms").add(newRoom);
         res.redirect("/rooms");
     } catch (err) {
-        console.error("❌ Error adding room:", err);
+        console.error(" Error adding room:", err);
         res.status(500).send("Error adding room");
     }
 });
 
-// 📌 Chỉnh sửa phòng
+// Chỉnh sửa phòng
 app.post("/rooms/:id/edit", async (req, res) => {
     try {
         const { id } = req.params;
@@ -189,12 +183,12 @@ app.post("/rooms/:id/edit", async (req, res) => {
     }
 });
 
-// ✅ Show login form
+
 app.get("/login", (req, res) => {
     res.render("login", { error: null });
 });
 
-// ✅ Handle login form submission
+
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const isValidEmail = email === ADMIN_EMAIL;
@@ -208,31 +202,29 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// ✅ Logout
+
 app.get("/logout", (req, res) => {
     req.session.destroy(() => {
         res.redirect("/login");
     });
 });
 
-/* -------------------------------------------------------------------------- */
-/*                             🔹 API ROUTES (JSON)                           */
-/* -------------------------------------------------------------------------- */
+/*                             API ROUTES (JSON)                           */
 
-// 🧍 USER ROUTES
+// USER ROUTES
 app.post("/api/users/login", loginUser);
 
 app.post("/api/users/register", registerUser);
 
 app.put("/api/users/:id", updateUser);
 
-// 🧾 BOOKING ROUTES
+// BOOKING ROUTES
 app.get("/api/bookings/user/:userId", async (req, res) => {
     try {
         const result = await getBookingsByUserId(req.params.userId);
         res.status(200).json(result);
     } catch (error) {
-        console.error("❌ Get bookings error:", error);
+        console.error(" Get bookings error:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -242,42 +234,42 @@ app.get("/api/bookings/room/:roomId", async (req, res) => {
         const result = await getBookingsByRoomId(req.params.roomId);
         res.status(200).json(result);
     } catch (error) {
-        console.error("❌ Get bookings error:", error);
+        console.error(" Get bookings error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post("/api/bookings", async (req, res) => {
+app.post("/api/bookings", verifyToken, async (req, res) => {
     try {
         const result = await addBooking(req.body);
         res.status(201).json(result);
     } catch (error) {
-        console.error("❌ Add booking error:", error);
+        console.error(" Add booking error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.put("/api/bookings/:id", requireUser, async (req, res) => {
+app.put("/api/bookings/:id", verifyToken, async (req, res) => {
     try {
         const result = await editBooking(req.params.id, req.body);
         res.status(200).json(result);
     } catch (error) {
-        console.error("❌ Edit booking error:", error);
+        console.error(" Edit booking error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-app.delete("/api/bookings/:id", registerUser, async (req, res) => {
+app.delete("/api/bookings/:id", verifyToken, async (req, res) => {
     try {
         const result = await deleteBooking(req.params.id);
         res.status(200).json(result);
     } catch (error) {
-        console.error("❌ Delete booking error:", error);
+        console.error(" Delete booking error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// 🏢 ROOM ROUTE
+// ROOM ROUTE
 app.get("/api/room/:id", getRoomById);
 
 app.get("/api/rooms/filter", getRoomsByLocation);

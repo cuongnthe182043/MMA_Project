@@ -1,6 +1,7 @@
 import { db, admin } from "../admin.js";
 import { User } from "../models/User.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 /**
  * Register a new user
@@ -112,13 +113,20 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        if (req.session) {
-            req.session.userId = userDoc.id;
-            req.session.role = user.role;
-        }
+        // ✅ Generate JWT token
+        const token = jwt.sign(
+            {
+                uid: userDoc.id,
+                role: user.role,
+                email: user.email,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+        );
 
         res.status(200).json({
             message: "Login successful",
+            token, // send token to client
             user: {
                 id: userDoc.id,
                 fullName: user.fullName,
