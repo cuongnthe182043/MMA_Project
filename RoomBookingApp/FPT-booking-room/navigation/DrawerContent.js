@@ -16,6 +16,7 @@ export default function DrawerContent({ navigation, setIsLoggedIn }) {
 
     const handleLogout = async () => {
         await AsyncStorage.removeItem("user");
+        await AsyncStorage.removeItem("token");
         setIsLoggedIn(false);
     };
 
