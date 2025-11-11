@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { login } from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
+
 
 export default function LoginScreen({ navigation, setIsLoggedIn }) {
     const [email, setEmail] = useState("");

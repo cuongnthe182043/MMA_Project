@@ -116,7 +116,7 @@ export const loginUser = async (req, res) => {
         // ✅ Generate JWT token
         const token = jwt.sign(
             {
-                uid: user.id,
+                uid: userDoc.id,
                 fullName: user.fullName,
                 role: user.role,
                 email: user.email,

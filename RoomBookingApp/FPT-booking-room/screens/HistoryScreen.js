@@ -13,7 +13,8 @@ export default function HistoryScreen() {
                 const userData = await AsyncStorage.getItem("user");
                 if (!userData) return;
                 const parsed = JSON.parse(userData);
-                const userId = parsed.id || parsed.uid || parsed.email || "guest";
+                const userId = parsed.uid || parsed.email || "guest";
+                console.log("➡ Fetching:", `${userId}`);
 
                 const res = await fetchBookingsByUser(userId);
                 // ✅ handle array response
