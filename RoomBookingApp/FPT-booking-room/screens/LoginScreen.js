@@ -30,12 +30,13 @@ export default function LoginScreen({ navigation, setIsLoggedIn }) {
             const data = await login(email, password);
 
             if (data.token) {
-                // Save token
                 await AsyncStorage.setItem("token", data.token);
 
-                // Decode and save user info
-                const decodedUser = await getUserFromToken();
-                await AsyncStorage.setItem("user", JSON.stringify(decodedUser));
+                const decodedUser = await getUserFromToken(); // ✅ Wait for it
+                if (decodedUser) {
+                    await AsyncStorage.setItem("user", JSON.stringify(decodedUser));
+                    console.log("✅ Saved user:", decodedUser);
+                }
 
                 setIsLoggedIn(true);
             } else {
@@ -49,7 +50,7 @@ export default function LoginScreen({ navigation, setIsLoggedIn }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Admin Login</Text>
+            <Text style={styles.title}>Login</Text>
             <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} />
             <TextInput
                 style={styles.input}

@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const API_BASE = "https://mma-project-1.onrender.com/api";
 
 export async function login(email, password) {
